@@ -27,13 +27,15 @@ class BackgroundLocationTrackingService : LifecycleService() {
      * Location Request and Client
      */
     private val fusedLocationClient by lazy { LocationServices.getFusedLocationProviderClient(this) }
-    private val locationRequest = createLocationRequest()
+    private val locationRequest by lazy { createLocationRequest() }
 
     /**
      * Location Settings
      */
-    private val locationSettingsBuilder =
+    private val locationSettingsBuilder by lazy {
         LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+    }
+
     private val settingsClient by lazy { LocationServices.getSettingsClient(this) }
 
     /**
