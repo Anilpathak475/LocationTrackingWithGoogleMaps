@@ -26,7 +26,7 @@ class BackgroundLocationTrackingService : LifecycleService() {
     /**
      * Location Request and Client
      */
-    private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+    private val fusedLocationClient by lazy { LocationServices.getFusedLocationProviderClient(this) }
     private val locationRequest = createLocationRequest()
 
     /**
@@ -34,7 +34,7 @@ class BackgroundLocationTrackingService : LifecycleService() {
      */
     private val locationSettingsBuilder =
         LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
-    private val settingsClient = LocationServices.getSettingsClient(this)
+    private val settingsClient by lazy { LocationServices.getSettingsClient(this) }
 
     /**
      * Callback
@@ -97,7 +97,6 @@ class BackgroundLocationTrackingService : LifecycleService() {
      */
     private fun stopLocationUpdates() =
         fusedLocationClient.removeLocationUpdates(fineLocationCallback)
-
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
