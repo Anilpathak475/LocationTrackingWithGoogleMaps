@@ -20,8 +20,10 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior.*
 import com.iammert.easymapslib.util.PermissionUtils
 import com.iammert.easymapslib.util.afterTextChanged
 import com.iammert.easymapslib.util.runAfter
+import com.location.movetracker.BackgroundLocationTrackingService
 import com.location.movetracker.R
 import com.location.movetracker.data.SelectedAddressInfo
+import com.location.movetracker.database.LocationHistoryDatabase
 import com.location.movetracker.location.livedata.LocationData
 import com.location.movetracker.location.livedata.LocationLiveData
 import com.location.movetracker.location.map.GoogleMapController
@@ -44,6 +46,8 @@ class EasyMapsActivity : AppCompatActivity() {
     private var isMapsInitialized = false
 
     private var bottomSheetState = STATE_COLLAPSED
+
+    private val db by lazy { LocationHistoryDatabase(this) }
 
     @SuppressLint("CheckResult")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,6 +78,14 @@ class EasyMapsActivity : AppCompatActivity() {
             }
         })
 
+        buttonBackgroundTracking.setOnClickListener {
+            startService(
+                Intent(
+                    this,
+                    BackgroundLocationTrackingService::class.java
+                )
+            )
+        }
         googleMapController.addIdleListener(locationMarkerView)
         googleMapController.addMoveStartListener(locationMarkerView)
 
@@ -84,7 +96,9 @@ class EasyMapsActivity : AppCompatActivity() {
                 LocationData.Status.PERMISSION_REQUIRED -> askLocationPermission(it.permissionList)
                 LocationData.Status.ENABLE_SETTINGS -> enableLocationSettings(it.resolvableApiException)
                 LocationData.Status.LOCATION_SUCCESS -> {
-                    updateUserLocation(it.location?.latitude, it.location?.longitude)
+                    it.location?.let { location ->
+                        updateUserLocation(location.latitude, location.longitude)
+                    }
                 }
             }
         })

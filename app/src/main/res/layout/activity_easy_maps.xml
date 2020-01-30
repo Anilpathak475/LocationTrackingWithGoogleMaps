@@ -1,111 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:app="http://schemas.android.com/apk/res-auto"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/color_white">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/color_white">
 
     <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
         <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorPrimary">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?attr/colorPrimary">
+                android:orientation="vertical">
 
-            <LinearLayout android:layout_width="match_parent"
-                          android:layout_height="wrap_content"
-                          android:orientation="vertical">
                 <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
 
                     <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_centerVertical="true"
-                            android:id="@+id/imageViewArrowBack"
-                            android:padding="@dimen/padding_16dp"
-                            android:clickable="true"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            app:srcCompat="@drawable/ic_round_arrow_white_24px"/>
+                        android:id="@+id/imageViewArrowBack"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:padding="@dimen/padding_16dp"
+                        app:srcCompat="@drawable/ic_round_arrow_white_24px" />
 
                     <androidx.appcompat.widget.AppCompatTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_centerHorizontal="true"
-                            android:textColor="@color/color_white"
-                            android:text="@string/title_toolbar_easy_map"
-                            android:textStyle="bold"
-                            android:textSize="@dimen/text_size_toolbar_title"
-                            android:layout_centerVertical="true"/>
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_centerVertical="true"
+                        android:text="@string/title_toolbar_easy_map"
+                        android:textColor="@color/color_white"
+                        android:textSize="@dimen/text_size_toolbar_title"
+                        android:textStyle="bold" />
 
                 </RelativeLayout>
 
                 <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/size_search_bar_height"
-                        android:focusableInTouchMode="true"
-                        android:background="@color/color_white">
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/size_search_bar_height"
+                    android:background="@color/color_white"
+                    android:focusableInTouchMode="true">
 
 
-                    <RelativeLayout android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:id="@+id/layoutSearchProgress"
-                                    android:animateLayoutChanges="true">
+                    <RelativeLayout
+                        android:id="@+id/layoutSearchProgress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:animateLayoutChanges="true">
 
 
                         <androidx.appcompat.widget.AppCompatImageView
-                                android:id="@+id/imageViewSearch"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:clickable="true"
-                                app:tint="?attr/colorPrimary"
-                                android:layout_centerInParent="true"
-                                android:background="?attr/selectableItemBackgroundBorderless"
-                                app:srcCompat="@drawable/ic_round_search_purple_24px"
-                                android:padding="@dimen/padding_12dp"/>
+                            android:id="@+id/imageViewSearch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerInParent="true"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:padding="@dimen/padding_12dp"
+                            app:srcCompat="@drawable/ic_round_search_purple_24px"
+                            app:tint="?attr/colorPrimary" />
 
 
                         <ProgressBar
-                                android:id="@+id/progressBarSearchLoading"
-                                android:theme="@style/EasyMapsCircularProgress"
-                                style="@style/Widget.AppCompat.ProgressBar"
-                                android:layout_width="24dp"
-                                android:visibility="gone"
-                                android:layout_margin="@dimen/margin_12dp"
-                                android:layout_height="24dp"
-                                android:layout_centerInParent="true"/>
+                            android:id="@+id/progressBarSearchLoading"
+                            style="@style/Widget.AppCompat.ProgressBar"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_centerInParent="true"
+                            android:layout_margin="@dimen/margin_12dp"
+                            android:theme="@style/EasyMapsCircularProgress"
+                            android:visibility="gone" />
 
                     </RelativeLayout>
 
                     <androidx.appcompat.widget.AppCompatEditText
-                            android:id="@+id/editTextSearchAddress"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center_vertical"
-                            android:background="@null"
-                            android:inputType="textCapSentences"
-                            android:textColorHint="@color/color_gray_text_hint"
-                            android:layout_toRightOf="@+id/layoutSearchProgress"
-                            android:hint="@string/hint_search_address"
-                            android:textSize="@dimen/text_size_regular"
-                            android:textColor="@color/color_gray"/>
+                        android:id="@+id/editTextSearchAddress"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_toRightOf="@+id/layoutSearchProgress"
+                        android:background="@null"
+                        android:gravity="center_vertical"
+                        android:hint="@string/hint_search_address"
+                        android:inputType="textCapSentences"
+                        android:textColor="@color/color_gray"
+                        android:textColorHint="@color/color_gray_text_hint"
+                        android:textSize="@dimen/text_size_regular" />
 
                     <androidx.appcompat.widget.AppCompatImageView
-                            android:id="@+id/imageViewClear"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            app:srcCompat="@drawable/ic_round_clear_purple_24px"
-                            android:layout_centerVertical="true"
-                            android:padding="@dimen/padding_12dp"
-                            android:visibility="gone"
-                            android:clickable="true"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:layout_alignParentRight="true"/>
+                        android:id="@+id/imageViewClear"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:padding="@dimen/padding_12dp"
+                        android:visibility="gone"
+                        app:srcCompat="@drawable/ic_round_clear_purple_24px" />
 
                 </RelativeLayout>
 
@@ -114,43 +117,53 @@
         </com.google.android.material.appbar.AppBarLayout>
 
         <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="@dimen/size_form_peek_height">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="@dimen/size_form_peek_height">
+
                 <fragment
-                        android:id="@+id/mapFragment"
-                        class="com.google.android.gms.maps.SupportMapFragment"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"/>
+                    android:id="@+id/mapFragment"
+                    class="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
 
                 <com.location.movetracker.ui.view.LocationMarkerView
-                        android:id="@+id/locationMarkerView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                    android:id="@+id/locationMarkerView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <Button
+                    android:id="@+id/buttonBackgroundTracking"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:text="Background Tracking" />
 
             </RelativeLayout>
 
             <com.location.movetracker.ui.view.predictionresult.PredictionResultView
-                    android:id="@+id/predictionResultView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@color/color_white"/>
+                android:id="@+id/predictionResultView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/color_white" />
 
         </RelativeLayout>
 
     </LinearLayout>
 
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout android:layout_width="match_parent"
-                                                         android:layout_height="match_parent">
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
         <include
-                android:id="@+id/layoutBottomSheetForm"
-                layout="@layout/layout_address_form"/>
+            android:id="@+id/layoutBottomSheetForm"
+            layout="@layout/layout_address_form" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

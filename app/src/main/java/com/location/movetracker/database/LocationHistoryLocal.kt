@@ -3,25 +3,24 @@ package com.location.movetracker.database
 
 import androidx.annotation.Nullable
 import androidx.room.*
-import com.google.gson.annotations.SerializedName
 
 @Entity
 data class LocationHistory(
+    @ColumnInfo(name = "lat")
+    @Nullable
+    var lat: Double? = 0.0,
+
+    @ColumnInfo(name = "long")
+    @Nullable
+    var long: Double? = 0.0
+) {
     @PrimaryKey(autoGenerate = true)
-    var uid: Int = 0,
+    var uid: Int = 0
 
     @ColumnInfo(name = "isUpdated")
     @Nullable
-    val isUpdated: Boolean = false,
-
-    @ColumnInfo(name = "lat")
-    @SerializedName("wish_id")
-    val wishId: String,
-
-    @ColumnInfo(name = "long")
-    @SerializedName("long")
-    val long: String
-)
+    var isUpdated: Boolean? = false
+}
 
 @Dao
 interface LocationHistoryDoa : BaseDao<LocationHistory> {

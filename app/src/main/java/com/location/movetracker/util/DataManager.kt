@@ -8,7 +8,8 @@ import com.location.movetracker.database.LocationHistoryDatabase
 object DataManager {
 
     @WorkerThread
-    fun saveLocation(db: LocationHistoryDatabase, locationHistory: LocationHistory) {
+    fun saveLocation(db: LocationHistoryDatabase, lat: Double, long: Double) {
+        val locationHistory = LocationHistory(lat, long)
         db.locationHistoryDoa().insert(locationHistory)
         Log.d("Size in databse", "" + getLocationHistory(db).size)
     }
