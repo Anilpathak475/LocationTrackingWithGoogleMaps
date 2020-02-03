@@ -6,9 +6,10 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.location.Location
 import android.os.Build
+import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.LifecycleService
 import com.google.android.gms.location.*
 import com.iammert.easymapslib.util.PermissionUtils
 import com.location.movetracker.database.LocationHistoryDatabase
@@ -18,8 +19,14 @@ import com.location.movetracker.util.DataManager
 import kotlinx.coroutines.Job
 
 
-class BackgroundLocationTrackingService : LifecycleService() {
+class BackgroundLocationTrackingService : Service() {
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
+    }
+
     private val CHANNEL_ID = "ForegroundServiceChannel"
+
+    private lateinit var sessionId: String
 
     private val db by lazy { LocationHistoryDatabase.invoke(this) }
 
@@ -45,17 +52,16 @@ class BackgroundLocationTrackingService : LifecycleService() {
         override fun onLocationResult(result: LocationResult?) {
             super.onLocationResult(result)
             result?.let {
-                saveLocation(it.lastLocation.latitude, it.lastLocation.longitude)
+                saveLocation(it.lastLocation)
             }
         }
     }
 
-    private fun saveLocation(latitude: Double, longitude: Double): Job {
+    private fun saveLocation(location: Location): Job {
         return Coroutines.io {
             DataManager.saveLocation(
                 db,
-                latitude,
-                longitude
+                location, sessionId
             )
         }
     }
@@ -83,7 +89,7 @@ class BackgroundLocationTrackingService : LifecycleService() {
         val settingsTask = settingsClient.checkLocationSettings(locationSettingsBuilder.build())
         settingsTask.addOnSuccessListener {
             fusedLocationClient.lastLocation.addOnSuccessListener {
-                it?.let { saveLocation(it.latitude, it.longitude) }
+                it?.let { saveLocation(it) }
                 fusedLocationClient.requestLocationUpdates(
                     locationRequest,
                     fineLocationCallback,
@@ -103,6 +109,11 @@ class BackgroundLocationTrackingService : LifecycleService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+        intent?.extras?.let {
+            if (it.containsKey(SESSION_ID)) {
+                sessionId = it.getString(SESSION_ID, "")
+            }
+        }
         val notificationIntent = Intent(this, EasyMapsActivity::class.java)
         createNotificationChannel()
         val pendingIntent = PendingIntent.getActivity(
@@ -118,7 +129,7 @@ class BackgroundLocationTrackingService : LifecycleService() {
         startForeground(1, notification)
         startLocationUpdates()
 
-        return Service.START_REDELIVER_INTENT
+        return START_REDELIVER_INTENT
     }
 
 
@@ -137,5 +148,9 @@ class BackgroundLocationTrackingService : LifecycleService() {
     override fun onDestroy() {
         super.onDestroy()
         stopLocationUpdates()
+    }
+
+    companion object {
+        const val SESSION_ID = "session_id"
     }
 }

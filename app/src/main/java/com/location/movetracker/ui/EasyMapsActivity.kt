@@ -33,6 +33,7 @@ import com.location.movetracker.util.hideKeyboard
 import kotlinx.android.synthetic.main.activity_easy_maps.*
 import kotlinx.android.synthetic.main.layout_address_form.*
 import kotlinx.android.synthetic.main.layout_address_form.view.*
+import java.util.*
 
 
 class EasyMapsActivity : AppCompatActivity() {
@@ -79,12 +80,15 @@ class EasyMapsActivity : AppCompatActivity() {
         })
 
         buttonBackgroundTracking.setOnClickListener {
-            startService(
-                Intent(
-                    this,
-                    BackgroundLocationTrackingService::class.java
-                )
+            val uuid = UUID.randomUUID().toString()
+            val bundle = Bundle()
+            bundle.putString(BackgroundLocationTrackingService.SESSION_ID, uuid)
+            val intent = Intent(
+                this,
+                BackgroundLocationTrackingService::class.java
             )
+            intent.putExtras(bundle)
+            startService(intent)
         }
         googleMapController.addIdleListener(locationMarkerView)
         googleMapController.addMoveStartListener(locationMarkerView)

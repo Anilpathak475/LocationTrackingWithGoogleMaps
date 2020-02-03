@@ -1,5 +1,6 @@
 package com.location.movetracker.util
 
+import android.location.Location
 import android.util.Log
 import androidx.annotation.WorkerThread
 import com.location.movetracker.database.LocationHistory
@@ -8,10 +9,21 @@ import com.location.movetracker.database.LocationHistoryDatabase
 object DataManager {
 
     @WorkerThread
-    fun saveLocation(db: LocationHistoryDatabase, lat: Double, long: Double) {
-        val locationHistory = LocationHistory(lat, long)
-        db.locationHistoryDoa().insert(locationHistory)
-        Log.d("Size in databse", "" + getLocationHistory(db).size)
+    fun saveLocation(db: LocationHistoryDatabase, location: Location, sessionId: String) {
+        location.let {
+
+            val locationHistory =
+                LocationHistory(
+                    it.latitude,
+                    it.longitude,
+                    it.speed,
+                    it.accuracy,
+                    location.time,
+                    sessionId
+                )
+            db.locationHistoryDoa().insert(locationHistory)
+            Log.d("Size in databse", "" + getLocationHistory(db).size)
+        }
     }
 
     @WorkerThread

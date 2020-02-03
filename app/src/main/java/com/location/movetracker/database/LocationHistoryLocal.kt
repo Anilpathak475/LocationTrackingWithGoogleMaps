@@ -12,7 +12,23 @@ data class LocationHistory(
 
     @ColumnInfo(name = "long")
     @Nullable
-    var long: Double? = 0.0
+    var long: Double? = 0.0,
+
+    @ColumnInfo(name = "speed")
+    @Nullable
+    var speed: Float? = 0F,
+
+    @ColumnInfo(name = "accuracy")
+    @Nullable
+    var accuracy: Float? = 0F,
+
+    @ColumnInfo(name = "timeStamp")
+    @Nullable
+    var time: Long? = 0,
+
+    @ColumnInfo(name = "session_id")
+    @Nullable
+    var session: String? = ""
 ) {
     @PrimaryKey(autoGenerate = true)
     var uid: Int = 0
