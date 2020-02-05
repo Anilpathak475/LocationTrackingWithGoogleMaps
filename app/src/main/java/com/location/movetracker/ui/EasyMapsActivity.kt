@@ -2,10 +2,13 @@ package com.location.movetracker.ui
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
@@ -15,11 +18,8 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetBehavior.*
+import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_COLLAPSED
 import com.iammert.easymapslib.util.PermissionUtils
-import com.iammert.easymapslib.util.afterTextChanged
-import com.iammert.easymapslib.util.runAfter
 import com.location.movetracker.BackgroundLocationTrackingService
 import com.location.movetracker.R
 import com.location.movetracker.data.SelectedAddressInfo
@@ -29,10 +29,9 @@ import com.location.movetracker.location.livedata.LocationLiveData
 import com.location.movetracker.location.map.GoogleMapController
 import com.location.movetracker.location.places.SearchResultState.*
 import com.location.movetracker.ui.view.LocationMarkerView
-import com.location.movetracker.util.hideKeyboard
+import com.location.movetracker.util.Coroutines
 import kotlinx.android.synthetic.main.activity_easy_maps.*
 import kotlinx.android.synthetic.main.layout_address_form.*
-import kotlinx.android.synthetic.main.layout_address_form.view.*
 import java.util.*
 
 
@@ -50,6 +49,13 @@ class EasyMapsActivity : AppCompatActivity() {
 
     private val db by lazy { LocationHistoryDatabase(this) }
 
+    private val backgroundLocationTrackingServiceIntent by lazy {
+        Intent(
+            this,
+            BackgroundLocationTrackingService::class.java
+        )
+    }
+
     @SuppressLint("CheckResult")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,11 +65,6 @@ class EasyMapsActivity : AppCompatActivity() {
 
         googleMapController = GoogleMapController()
 
-        observeFormBottomSheeet()
-
-        observeAddressSearch()
-
-        observeToolbarActions()
 
         googleMapController.addIdleListener(GoogleMap.OnCameraIdleListener {
             googleMapController.getMap()?.let { map ->
@@ -73,22 +74,20 @@ class EasyMapsActivity : AppCompatActivity() {
             }
         })
 
-        googleMapController.addClickListener(GoogleMap.OnMapClickListener {
-            if (isExpanded()) {
-                collapseBottomSheet()
-            }
-        })
 
         buttonBackgroundTracking.setOnClickListener {
             val uuid = UUID.randomUUID().toString()
             val bundle = Bundle()
             bundle.putString(BackgroundLocationTrackingService.SESSION_ID, uuid)
-            val intent = Intent(
-                this,
-                BackgroundLocationTrackingService::class.java
-            )
-            intent.putExtras(bundle)
-            startService(intent)
+
+            backgroundLocationTrackingServiceIntent.putExtras(bundle)
+            startService(backgroundLocationTrackingServiceIntent)
+        }
+
+        btnStopTracking.setOnClickListener {
+            stopService(backgroundLocationTrackingServiceIntent)
+            showSyncLocationDialog()
+
         }
         googleMapController.addIdleListener(locationMarkerView)
         googleMapController.addMoveStartListener(locationMarkerView)
@@ -150,6 +149,43 @@ class EasyMapsActivity : AppCompatActivity() {
         })
     }
 
+    private fun showSyncLocationDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.let {
+            title = "Done With Run"
+            it.setMessage("Do you want to sync location to server?")
+            it.setPositiveButton("YES") { dialog, which ->
+                mockSyncLocation()
+                dialog.dismiss()
+            }
+            it.setNegativeButton("Cancel") { dialog, which ->
+                dialog.dismiss()
+            }
+            val dialog: AlertDialog = it.create()
+            dialog.show()
+        }
+    }
+
+    private fun mockSyncLocation() {
+        Toast.makeText(this, "Syncing Location to server", Toast.LENGTH_SHORT)
+            .show()
+        Coroutines.ioThenMain({
+            val locations =
+                db.locationHistoryDoa().getPendingSyncedLocation()
+            locations.forEach { it.isUpdated = true }
+            db.locationHistoryDoa().update(locations)
+            locations.size
+        }) {
+            Toast.makeText(this, "Syncing Completed updated $it", Toast.LENGTH_SHORT)
+                .show()
+        }
+
+        Coroutines.io {
+            val locationSource = db.locationHistoryDoa().getAll().distinctBy { it.session }
+            locationSource.forEach { Log.d("Session", it.session) }
+        }
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -168,23 +204,12 @@ class EasyMapsActivity : AppCompatActivity() {
         }
     }
 
-    override fun onBackPressed() {
-        if (predictionResultView.isShowing()) {
-            predictionResultView.hide()
-            editTextSearchAddress.clearFocus()
-            collapseBottomSheet()
-            return
-        }
-
-        if (isExpanded()) {
-            collapseBottomSheet()
-            return
-        }
-        super.onBackPressed()
-    }
-
     private fun askLocationPermission(permissionList: Array<String?>) {
-        ActivityCompat.requestPermissions(this, permissionList, REQUEST_CODE_LOCATION_PERMISSION)
+        ActivityCompat.requestPermissions(
+            this,
+            permissionList,
+            REQUEST_CODE_LOCATION_PERMISSION
+        )
     }
 
     private fun enableLocationSettings(exception: ResolvableApiException?) {
@@ -210,196 +235,6 @@ class EasyMapsActivity : AppCompatActivity() {
 
             easyMapsViewModel.updateLatLong(LatLng(latitude ?: 0.0, longitude ?: 0.0))
         }
-    }
-
-    private fun observeFormBottomSheeet() {
-        val bottomSheetBehavior = from(layoutBottomSheetForm)
-
-        bottomSheetBehavior.setBottomSheetCallback(object :
-            BottomSheetBehavior.BottomSheetCallback() {
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                updateFormFieldVisibilityOnScroll(slideOffset)
-                locationMarkerView.updateMarkerViewPosition(slideOffset)
-            }
-
-            @SuppressLint("SwitchIntDef")
-            override fun onStateChanged(bottomSheet: View, newState: Int) {
-                if (bottomSheetState == newState) {
-                    return
-                }
-
-                when (newState) {
-                    STATE_EXPANDED -> {
-                        googleMapController.disableGestures()
-                        moveCameraOnBottomStateChanged(newState)
-                        bottomSheetState = STATE_EXPANDED
-                    }
-                    STATE_COLLAPSED -> {
-                        googleMapController.enableGestures()
-                        bottomSheetState = STATE_COLLAPSED
-                        moveCameraOnBottomStateChanged(newState)
-                    }
-                }
-            }
-        })
-
-        layoutAddressCollapsed.setOnClickListener { bottomSheetBehavior.state = STATE_EXPANDED }
-
-        layoutBottomSheetForm.buttonSave.setOnClickListener {
-            collapseBottomSheet()
-        }
-
-        editTextBuildingNo.afterTextChanged {
-            easyMapsViewModel.updateBuildingNumber(it)
-            layoutBuildingNo.setBackgroundResource(R.drawable.border_field)
-        }
-
-        editTextDescription.afterTextChanged {
-            easyMapsViewModel.updateDescription(it)
-            layoutAddressDescription.setBackgroundResource(R.drawable.border_field)
-        }
-
-        editTextDoor.afterTextChanged {
-            easyMapsViewModel.updateDoorNumber(it)
-            layoutDoor.setBackgroundResource(R.drawable.border_field)
-        }
-
-        editTextAddressTitle.afterTextChanged {
-            easyMapsViewModel.updateAddressTitle(it)
-            layoutAddressTitle.setBackgroundResource(R.drawable.border_field)
-        }
-    }
-
-    private fun observeAddressSearch() {
-        editTextSearchAddress.afterTextChanged {
-            imageViewClear.visibility = if (it.isNotEmpty()) View.VISIBLE else View.GONE
-            easyMapsViewModel.searchAddress(it)
-        }
-
-        editTextSearchAddress.setOnFocusChangeListener { v, hasFocus ->
-            if (hasFocus && predictionResultView.isShowing().not()) {
-                predictionResultView.show()
-                hideBottomSheet()
-            }
-        }
-
-        predictionResultView.setOnItemClicked {
-            hideKeyboard()
-            runAfter(500) {
-                editTextSearchAddress.clearFocus()
-                collapseBottomSheet()
-                predictionResultView.hide()
-                easyMapsViewModel.updateAutoCompletePrediction(it)
-            }
-        }
-
-        imageViewClear.setOnClickListener { editTextSearchAddress.setText("") }
-    }
-
-    private fun observeToolbarActions() {
-        imageViewArrowBack.setOnClickListener { finish() }
-
-        buttonDone.setOnClickListener {
-            if (validateForm()) {
-                Intent()
-                    .apply {
-                        putExtra(
-                            KEY_SELECTED_ADDRESS,
-                            easyMapsViewModel.getSelectedAddressInfo()
-                        )
-                    }
-                    .also { setResult(Activity.RESULT_OK, it) }
-                    .also { finish() }
-            } else {
-                from(layoutBottomSheetForm).state = STATE_EXPANDED
-            }
-        }
-    }
-
-    private fun updateFormFieldVisibilityOnScroll(slideOffset: Float) {
-        layoutAddressCollapsed.alpha = 1.0f - slideOffset
-        layoutAddressFormExpanded.alpha = slideOffset
-
-        when (slideOffset) {
-            0f -> {
-                layoutAddressCollapsed.visibility = View.VISIBLE
-                layoutAddressFormExpanded.visibility = View.INVISIBLE
-            }
-            1f -> {
-                layoutAddressCollapsed.visibility = View.INVISIBLE
-                layoutAddressFormExpanded.visibility = View.VISIBLE
-            }
-            else -> {
-                layoutAddressCollapsed.visibility = View.VISIBLE
-                layoutAddressFormExpanded.visibility = View.VISIBLE
-            }
-        }
-    }
-
-    private fun moveCameraOnBottomStateChanged(bottomSheetState: Int) {
-        val point = when (bottomSheetState) {
-            STATE_COLLAPSED -> locationMarkerView.getCollapsedCameraPoint()
-            STATE_EXPANDED -> locationMarkerView.getExpandedCameraPoint()
-            else -> null
-        }
-
-        point?.let {
-            googleMapController
-                .animateCameraToPoint(
-                    screenPoint = point,
-                    onStarted = { locationMarkerView.setFloatingOnMove(false) },
-                    onFinished = { locationMarkerView.setFloatingOnMove(true) })
-        }
-    }
-
-    private fun collapseBottomSheet() {
-        val formBehavior = from(layoutBottomSheetForm)
-        formBehavior.isHideable = false
-        formBehavior.state = STATE_COLLAPSED
-    }
-
-    private fun hideBottomSheet() {
-        val formBehavior = from(layoutBottomSheetForm)
-        formBehavior.isHideable = true
-        formBehavior.state = STATE_HIDDEN
-    }
-
-    private fun isExpanded() = from(layoutBottomSheetForm).state == STATE_EXPANDED
-
-    private fun fillFormWithInitialValues(selectedAddressInfo: SelectedAddressInfo) {
-        with(selectedAddressInfo) {
-            textViewFullAddress.text = fullAddress
-            editTextFullAddress.setText(fullAddress)
-            editTextBuildingNo.setText(buildingNumber)
-            editTextDescription.setText(description)
-            editTextDoor.setText(door)
-            editTextAddressTitle.setText(addressTitle)
-        }
-    }
-
-    private fun validateForm(): Boolean {
-        if (easyMapsViewModel.isValidateNeed().not()) {
-            return true
-        }
-
-        var isValidationOK = true
-
-        if (editTextBuildingNo.text.isNullOrBlank()) {
-            layoutBuildingNo.setBackgroundResource(R.drawable.border_field_required)
-            isValidationOK = false
-        }
-
-        if (editTextAddressTitle.text.isNullOrBlank()) {
-            layoutAddressTitle.setBackgroundResource(R.drawable.border_field_required)
-            isValidationOK = false
-        }
-
-        if (editTextDoor.text.isNullOrBlank()) {
-            layoutDoor.setBackgroundResource(R.drawable.border_field_required)
-            isValidationOK = false
-        }
-
-        return isValidationOK
     }
 
     companion object {

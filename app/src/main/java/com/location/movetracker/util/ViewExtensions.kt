@@ -26,3 +26,8 @@ fun View.updateMargins(left: Int? = null, top: Int? = null, right: Int? = null, 
     layoutParams = currentLayoutParams
     invalidate()
 }
+
+inline fun <T, K> Iterable<T>.distinctBy(
+    selector: (T) -> K
+) {
+}

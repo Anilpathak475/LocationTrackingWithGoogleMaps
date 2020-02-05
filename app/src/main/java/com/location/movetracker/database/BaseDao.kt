@@ -25,12 +25,21 @@ interface BaseDao<T> {
     fun insert(vararg obj: T)
 
     /**
-     * Update an object from the database.
+     * Update an array of objects in the database.
      *
      * @param obj the object to be updated
      */
     @Update
     fun update(obj: T)
+
+
+    /**
+     * Update an object from the database.
+     *
+     * @param obj the object to be updated
+     */
+    @Update
+    fun update(obj: List<T>)
 
     /**
      * Delete an object from the database

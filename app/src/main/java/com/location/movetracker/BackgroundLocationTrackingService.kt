@@ -16,7 +16,6 @@ import com.location.movetracker.database.LocationHistoryDatabase
 import com.location.movetracker.ui.EasyMapsActivity
 import com.location.movetracker.util.Coroutines
 import com.location.movetracker.util.DataManager
-import kotlinx.coroutines.Job
 
 
 class BackgroundLocationTrackingService : Service() {
@@ -29,6 +28,7 @@ class BackgroundLocationTrackingService : Service() {
     private lateinit var sessionId: String
 
     private val db by lazy { LocationHistoryDatabase.invoke(this) }
+
 
     /**
      * Location Request and Client
@@ -46,19 +46,35 @@ class BackgroundLocationTrackingService : Service() {
     private val settingsClient by lazy { LocationServices.getSettingsClient(this) }
 
     /**
+     * Last Location
+     */
+    private var lastLocation: Location? = null
+
+    /**
      * Callback
      */
     private val fineLocationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult?) {
             super.onLocationResult(result)
             result?.let {
-                saveLocation(it.lastLocation)
+                calculateDistance(it.lastLocation)
             }
         }
     }
 
-    private fun saveLocation(location: Location): Job {
-        return Coroutines.io {
+    private fun calculateDistance(location: Location) {
+        /*  var distanceInMeters = -1f
+          lastLocation?.let {
+              distanceInMeters = it.distanceTo(location)
+          }
+          if (distanceInMeters < 0 || distanceInMeters > 1) {*/
+        lastLocation = location
+        saveLocation(location)
+        // }
+    }
+
+    private fun saveLocation(location: Location) {
+        Coroutines.io {
             DataManager.saveLocation(
                 db,
                 location, sessionId

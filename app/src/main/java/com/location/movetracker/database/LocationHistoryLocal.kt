@@ -44,6 +44,11 @@ interface LocationHistoryDoa : BaseDao<LocationHistory> {
     @Query("SELECT * FROM locationhistory")
     fun getAll(): List<LocationHistory>
 
+    @Query(
+        "SELECT * FROM locationhistory where isUpdated=:status "
+    )
+    fun getPendingSyncedLocation(status: Boolean = false): List<LocationHistory>
+
     @Query("DELETE FROM locationhistory")
     fun deleteAll()
 
